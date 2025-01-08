@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/GameScene.unity
     guid: 12dd7bb27c47ea1458c8d4ecd98af2cc
   - enabled: 1
-    path: Assets/test.unity
-    guid: 3c48b486f2a792747a5105c0b3f5c7ed
+    path: Assets/Scenes/OnDeathHeatmap.unity
+    guid: 4d314c53edc0f8f4ba70805d323b834f
+  - enabled: 1
+    path: Assets/Scenes/OnReceiveDamageHeatmap.unity
+    guid: 08a5061623e1e074caa1a4263e72385b
   m_configObjects: {}
