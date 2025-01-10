@@ -7,13 +7,16 @@ public class HeatmapManager : MonoBehaviour
 {
     [SerializeField] private string serverUrl;
     [SerializeField] private string eventType; // e.g., "OnDeath" or "OnReceiveDamage"
-    [SerializeField] private GameObject cubePrefab; // Prefab for heatmap cubes
-    [SerializeField] private Transform parentTransform; // Parent for cubes
+    [SerializeField] private GameObject cubePrefab;
+    [SerializeField] private Transform parentTransform;
 
-    private float cubeSizeMultiplier = 1.0f; // Initial size multiplier for the cubes
-    private Color cubeColor = Color.red; // Default color
+    [SerializeField] private float baseCubeSize = 1.0f;
+    private float cubeSizeMultiplier = 0.5f;
+    private Color cubeColor = Color.red;
+    private Dictionary<Vector3, int> heatmapDataDensity = new Dictionary<Vector3, int>();
+    private List<GameObject> generatedCubes = new List<GameObject>();
 
-    private List<GameObject> generatedCubes = new List<GameObject>(); // To store instantiated cubes for later updates
+    public bool IsVisible { get; set; } = true;
 
     private void Start()
     {
@@ -30,13 +33,14 @@ public class HeatmapManager : MonoBehaviour
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log("Heatmap data received.");
+                Debug.Log($"Heatmap data received for {eventType}.");
                 List<HeatmapData> heatmapData = ParseHeatmapData(request.downloadHandler.text);
-                GenerateHeatmap(heatmapData);
+                AggregateHeatmapData(heatmapData);
+                GenerateHeatmap();
             }
             else
             {
-                Debug.LogError("Failed to fetch heatmap data: " + request.error);
+                Debug.LogError($"Failed to fetch heatmap data for {eventType}: {request.error}");
             }
         }
     }
@@ -47,46 +51,75 @@ public class HeatmapManager : MonoBehaviour
         return new List<HeatmapData>(dataArray);
     }
 
-    private void GenerateHeatmap(List<HeatmapData> heatmapData)
+    private void AggregateHeatmapData(List<HeatmapData> heatmapData)
     {
-        if (heatmapData == null || heatmapData.Count == 0)
-        {
-            Debug.Log("No heatmap data to generate.");
-            return;
-        }
-
-        // Find the max count for scaling
-        int maxCount = 0;
-        foreach (var data in heatmapData)
-        {
-            maxCount = Mathf.Max(maxCount, data.Count);
-        }
+        heatmapDataDensity.Clear();
 
         foreach (var data in heatmapData)
         {
-            // Parse position from string
             Vector3 position = ParsePosition(data.Position);
+            Vector3 roundedPosition = new Vector3(
+                Mathf.Round(position.x),
+                Mathf.Round(position.y),
+                Mathf.Round(position.z)
+            );
 
-            // Create a cube at the position
-            GameObject cube = Instantiate(cubePrefab, position, Quaternion.identity, parentTransform);
-            generatedCubes.Add(cube); // Store the cube reference for later updates
-
-            // Scale the cube based on count and multiplier (capped at 1.3)
-            cube.transform.localScale = Vector3.one * Mathf.Clamp((0.5f + data.Count / (float)maxCount), 0.5f, 1.3f) * cubeSizeMultiplier;
-
-            // Set the cube's color based on selected color
-            Renderer renderer = cube.GetComponent<Renderer>();
-            if (renderer != null)
+            if (heatmapDataDensity.ContainsKey(roundedPosition))
             {
-                renderer.material.color = cubeColor;  // Use the selected color
+                heatmapDataDensity[roundedPosition] += data.Count;
+            }
+            else
+            {
+                heatmapDataDensity[roundedPosition] = data.Count;
             }
         }
     }
 
+    private void GenerateHeatmap()
+    {
+        ClearHeatmap();
+
+        int maxCount = 0;
+        foreach (var count in heatmapDataDensity.Values)
+        {
+            maxCount = Mathf.Max(maxCount, count);
+        }
+
+        foreach (var entry in heatmapDataDensity)
+        {
+            Vector3 position = entry.Key;
+            int count = entry.Value;
+
+            GameObject cube = Instantiate(cubePrefab, position, Quaternion.identity, parentTransform);
+            generatedCubes.Add(cube);
+
+            float size = Mathf.Clamp(baseCubeSize + (count / (float)maxCount), baseCubeSize, 1.3f * baseCubeSize) * cubeSizeMultiplier;
+            cube.transform.localScale = Vector3.one * size;
+
+
+            Renderer renderer = cube.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.material.color = Color.Lerp(Color.green, Color.red, count / (float)maxCount);
+            }
+
+            cube.SetActive(IsVisible);
+        }
+    }
+
+    public void ClearHeatmap()
+    {
+        foreach (var cube in generatedCubes)
+        {
+            Destroy(cube);
+        }
+        generatedCubes.Clear();
+    }
+
     private Vector3 ParsePosition(string positionString)
     {
-        positionString = positionString.Trim('(', ')'); // Remove parentheses
-        string[] parts = positionString.Split(','); // Split into components (x, y, z)
+        positionString = positionString.Trim('(', ')');
+        string[] parts = positionString.Split(',');
         return new Vector3(
             float.Parse(parts[0], System.Globalization.CultureInfo.InvariantCulture),
             float.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture),
@@ -94,45 +127,45 @@ public class HeatmapManager : MonoBehaviour
         );
     }
 
-    // Method to set cube size multiplier
     public void SetCubeSizeMultiplier(float value)
     {
         cubeSizeMultiplier = value;
-        UpdateCubeSizes(); // Update cubes' size whenever the multiplier changes
+        UpdateCubeSizes();
     }
 
-    // Method to update the sizes of all cubes
-    public void UpdateCubeSizes()
+    private void UpdateCubeSizes()
     {
+        int maxCount = 0;
+        foreach (var count in heatmapDataDensity.Values)
+        {
+            maxCount = Mathf.Max(maxCount, count);
+        }
+
+        foreach (var cube in generatedCubes)
+        {
+            Vector3 position = cube.transform.position;
+            if (heatmapDataDensity.TryGetValue(position, out int count))
+            {
+                float size = Mathf.Clamp(baseCubeSize + (count / (float)maxCount), baseCubeSize, 1.3f * baseCubeSize) * cubeSizeMultiplier;
+                cube.transform.localScale = Vector3.one * size;
+
+            }
+        }
+    }
+
+    public void SetCubeVisibility(bool isVisible)
+    {
+        IsVisible = isVisible;
+
         foreach (var cube in generatedCubes)
         {
             if (cube != null)
             {
-                // Update cube size based on the size multiplier
-                cube.transform.localScale = Vector3.one * Mathf.Clamp((0.5f + cube.transform.localScale.x), 0.5f, 1.3f) * cubeSizeMultiplier;
+                cube.SetActive(IsVisible);
             }
         }
     }
 
-    // Method to set cube color
-    public void SetCubeColor(Color color)
-    {
-        cubeColor = color;
-        UpdateCubeColors(); // Update cubes' color whenever the color changes
-    }
-
-    // Method to update the colors of all cubes
-    public void UpdateCubeColors()
-    {
-        foreach (var cube in generatedCubes)
-        {
-            Renderer renderer = cube.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                renderer.material.color = cubeColor;  // Apply the selected color
-            }
-        }
-    }
 
     [System.Serializable]
     private class HeatmapDataWrapper

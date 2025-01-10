@@ -7,4 +7,13 @@ public class LoadScene : MonoBehaviour
     {
         SceneManager.LoadScene(sceneName);
     }
+
+
+    private void Update()
+    {
+        if (SceneManager.GetActiveScene().name == "HeatmapScene" && Input.GetKeyDown(KeyCode.Escape))
+        {
+            LoadNewScene("GameScene");
+        }
+    }
 }
