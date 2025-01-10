@@ -96,7 +96,6 @@ public class HeatmapManager : MonoBehaviour
             float size = Mathf.Clamp(baseCubeSize + (count / (float)maxCount), baseCubeSize, 1.3f * baseCubeSize) * cubeSizeMultiplier;
             cube.transform.localScale = Vector3.one * size;
 
-
             Renderer renderer = cube.GetComponent<Renderer>();
             if (renderer != null)
             {
@@ -148,7 +147,6 @@ public class HeatmapManager : MonoBehaviour
             {
                 float size = Mathf.Clamp(baseCubeSize + (count / (float)maxCount), baseCubeSize, 1.3f * baseCubeSize) * cubeSizeMultiplier;
                 cube.transform.localScale = Vector3.one * size;
-
             }
         }
     }
@@ -166,6 +164,16 @@ public class HeatmapManager : MonoBehaviour
         }
     }
 
+    // New method to get heatmap positions
+    public List<Vector3> GetHeatmapPositions()
+    {
+        List<Vector3> positions = new List<Vector3>();
+        foreach (var entry in heatmapDataDensity)
+        {
+            positions.Add(entry.Key);  // Each key is a position
+        }
+        return positions;
+    }
 
     [System.Serializable]
     private class HeatmapDataWrapper

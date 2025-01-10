@@ -5,11 +5,12 @@ TagManager:
   serializedVersion: 2
   tags:
   - FlythroughCam
+  - Particle
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - HeatMapLayer
   - Water
   - UI
   - 
