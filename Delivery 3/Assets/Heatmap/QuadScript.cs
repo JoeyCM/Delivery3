@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;  // Ensure you include the TextMeshPro namespace
 
 public class QuadScript : MonoBehaviour
 {
@@ -22,6 +23,16 @@ public class QuadScript : MonoBehaviour
     // Materials
     [SerializeField] private Material defaultMaterial; // Default material
     [SerializeField] private Material heatmapMaterial; // Heatmap material
+
+    // UI sliders for controlling shader values
+    [SerializeField] private Slider diameterSlider;
+    [SerializeField] private Slider strengthSlider;
+    [SerializeField] private Slider pulseSpeedSlider;
+
+    // UI TextMeshPro texts for displaying slider values
+    [SerializeField] private TextMeshProUGUI diameterText;
+    [SerializeField] private TextMeshProUGUI strengthText;
+    [SerializeField] private TextMeshProUGUI pulseSpeedText;
 
     void Start()
     {
@@ -61,6 +72,9 @@ public class QuadScript : MonoBehaviour
 
         // Call RefreshMaterial at the start to reset the material and hits
         RefreshMaterial();
+
+        // Initialize sliders with their ranges and values
+        InitializeSliders();
     }
 
     void Update()
@@ -69,6 +83,83 @@ public class QuadScript : MonoBehaviour
         if (mDelay <= 0)
         {
             mDelay = 0.8f;
+        }
+    }
+
+    private void InitializeSliders()
+    {
+        // Set slider ranges for diameter (0 to 10), strength (0.1 to 50), and pulse speed (0 to 20)
+        if (diameterSlider != null)
+        {
+            diameterSlider.minValue = 0f;
+            diameterSlider.maxValue = 10f;
+            diameterSlider.onValueChanged.AddListener(UpdateShaderDiameter);
+            diameterSlider.value = mMaterial.GetFloat("_Diameter"); // Set initial value
+            UpdateDiameterText(diameterSlider.value); // Update the text immediately
+        }
+
+        if (strengthSlider != null)
+        {
+            strengthSlider.minValue = 0.1f;
+            strengthSlider.maxValue = 50f;
+            strengthSlider.onValueChanged.AddListener(UpdateShaderStrength);
+            strengthSlider.value = mMaterial.GetFloat("_Strength"); // Set initial value
+            UpdateStrengthText(strengthSlider.value); // Update the text immediately
+        }
+
+        if (pulseSpeedSlider != null)
+        {
+            pulseSpeedSlider.minValue = 0f;
+            pulseSpeedSlider.maxValue = 20f;
+            pulseSpeedSlider.onValueChanged.AddListener(UpdateShaderPulseSpeed);
+            pulseSpeedSlider.value = mMaterial.GetFloat("_PulseSpeed"); // Set initial value
+            UpdatePulseSpeedText(pulseSpeedSlider.value); // Update the text immediately
+        }
+    }
+
+    private void UpdateShaderDiameter(float value)
+    {
+        // Update the shader's _Diameter property
+        mMaterial.SetFloat("_Diameter", value);
+        UpdateDiameterText(value);  // Update the TextMeshPro UI text
+    }
+
+    private void UpdateShaderStrength(float value)
+    {
+        // Update the shader's _Strength property
+        mMaterial.SetFloat("_Strength", value);
+        UpdateStrengthText(value);  // Update the TextMeshPro UI text
+    }
+
+    private void UpdateShaderPulseSpeed(float value)
+    {
+        // Update the shader's _PulseSpeed property
+        mMaterial.SetFloat("_PulseSpeed", value);
+        UpdatePulseSpeedText(value);  // Update the TextMeshPro UI text
+    }
+
+    // Update the TextMeshPro Text elements for each slider's value
+    private void UpdateDiameterText(float value)
+    {
+        if (diameterText != null)
+        {
+            diameterText.text = "Diameter: " + value.ToString("F2");  // Format to 2 decimal places
+        }
+    }
+
+    private void UpdateStrengthText(float value)
+    {
+        if (strengthText != null)
+        {
+            strengthText.text = "Strength: " + value.ToString("F2");  // Format to 2 decimal places
+        }
+    }
+
+    private void UpdatePulseSpeedText(float value)
+    {
+        if (pulseSpeedText != null)
+        {
+            pulseSpeedText.text = "Pulse Speed: " + value.ToString("F2");  // Format to 2 decimal places
         }
     }
 
@@ -131,8 +222,10 @@ public class QuadScript : MonoBehaviour
         float[] emptyHits = new float[256 * 3]; // Clear the hit array
         mMaterial.SetFloatArray("_Hits", emptyHits);
         
-        // You can optionally set other material properties if needed
-        mMaterial.SetFloat("_Diameter", 1.0f); // Reset diameter or any other property if needed
+        // Reset shader values to defaults
+        mMaterial.SetFloat("_Diameter", 1.0f); 
+        mMaterial.SetFloat("_Strength", 1.0f);
+        mMaterial.SetFloat("_PulseSpeed", 0.0f);
     }
 
     private void SpawnHeatmapParticles(HeatmapManager manager)
@@ -202,7 +295,7 @@ public class QuadScript : MonoBehaviour
     // Method to switch to heatmap material when called
     public void HeatmapExit()
     {
-        // Switch material to the heatmap material
+        // Switch material to the default material
         mMaterial = defaultMaterial;
         mMeshRenderer.material = mMaterial;
     }
