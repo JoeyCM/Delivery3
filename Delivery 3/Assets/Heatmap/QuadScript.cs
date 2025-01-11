@@ -63,7 +63,7 @@ public class QuadScript : MonoBehaviour
                 SpawnHeatmapParticles(manager);
             }
 
-            mDelay = 0.5f;
+            mDelay = 0.8f;
         }
     }
 
@@ -117,7 +117,7 @@ public class QuadScript : MonoBehaviour
                 // Instantiate the projectile at the position with Y adjusted by +2
                 GameObject go = Instantiate(Resources.Load<GameObject>("Projectile"));
                 Vector3 adjustedPosition = position;
-                adjustedPosition.y += 2f; // Adjust the Y position by 2
+                adjustedPosition.y += 1f; // Adjust the Y position by 2
                 go.transform.position = adjustedPosition; // Use adjusted position
             }
         }
