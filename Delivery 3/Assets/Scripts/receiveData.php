@@ -44,8 +44,21 @@ if ($requestType === 'insert') {
         } else {
             echo "Error: " . $sql->error;
         }
+    } else if (isset($data['EnemyEventType'], $data['EnemyTimestamp'], $data['EnemyPosition'])) {
+        $enemyEventType = $data['EnemyEventType'];
+        $enemyTimestamp = $data['EnemyTimestamp'];
+        $enemyPosition = $conn->real_escape_string($data['EnemyPosition']);
+
+        $sql = $conn->prepare("INSERT INTO enemyevents (EnemyEventType, EnemyTimestamp, EnemyPosition) VALUES (?, ?, ?)");
+        $sql->bind_param("sss", $enemyEventType, $enemyTimestamp, $enemyPosition);
+
+        if ($sql->execute()) {
+            echo "Enemy data inserted successfully.";
+        } else {
+            echo "Error: " . $sql->error;
+        }
     } else {
-        echo "Error: Missing required fields (EventType, Timestamp, Position).";
+        echo "Error: Missing required fields.";
     }
 } else if ($requestType === 'fetch') {
     // Fetch data for heatmap
