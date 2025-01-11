@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Networking;
 
 public class HeatmapManager : MonoBehaviour
@@ -205,6 +206,27 @@ public class HeatmapManager : MonoBehaviour
             if (cube != null)
             {
                 cube.SetActive(IsVisible);
+            }
+        }
+    }
+
+    public void SetCubeColor(Color color)
+    {
+        cubeColor = color;
+        UpdateCubeColors();
+    }
+
+    private void UpdateCubeColors()
+    {
+        foreach (var cube in generatedCubes)
+        {
+            if (cube != null)
+            {
+                Renderer renderer = cube.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.material.color = cubeColor;
+                }
             }
         }
     }

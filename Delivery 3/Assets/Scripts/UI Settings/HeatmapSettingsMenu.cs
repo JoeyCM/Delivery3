@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using System.Collections;
+using System.Collections.Generic;
 
 public class HeatmapSettingsMenu : MonoBehaviour
 {
@@ -12,7 +14,12 @@ public class HeatmapSettingsMenu : MonoBehaviour
     [Header("Heatmap Managers")]
     public HeatmapManager playerDeathsHeatmapManager;   // HeatmapManager for deaths
     public HeatmapManager playerDamageHeatmapManager;  // HeatmapManager for damage
-    public HeatmapManager enemiesDeathsHeatmapManager;  // HeatmapManager for damage
+    public HeatmapManager enemiesDeathsHeatmapManager;  // HeatmapManager for enemies
+
+    [Header("Color Dropdowns")]
+    public TMP_Dropdown playerDeathsColorDropdown;
+    public TMP_Dropdown playerDamageColorDropdown;
+    public TMP_Dropdown enemiesDeathsColorDropdown;
 
     [Header("Toggle Visibility")]
     public Toggle playerDeathsToggle;  // Toggle for deaths cubes
@@ -23,9 +30,28 @@ public class HeatmapSettingsMenu : MonoBehaviour
 
     private bool isPanelActive = false;
 
+    private readonly Dictionary<string, Color> colorOptions = new Dictionary<string, Color>
+    {
+        { "Red", Color.red },
+        { "Green", Color.green },
+        { "Blue", Color.blue },
+        { "Yellow", Color.yellow },
+        { "Magenta", Color.magenta },
+        { "Cyan", Color.cyan },
+        { "Orange", new Color(1.0f, 0.5f, 0.0f) },
+        { "Purple", new Color(0.5f, 0.0f, 0.5f) },
+        { "White", Color.white },
+        { "Black", Color.black }
+    };
+
     void Start()
     {
         settingsPanel.SetActive(false);
+
+        // Initialize color dropdowns
+        InitializeColorDropdown(playerDeathsColorDropdown);
+        InitializeColorDropdown(playerDamageColorDropdown);
+        InitializeColorDropdown(enemiesDeathsColorDropdown);
 
         // Set slider initial value
         cubeSizeSlider.value = 0.5f;
@@ -37,10 +63,18 @@ public class HeatmapSettingsMenu : MonoBehaviour
         playerDamageToggle.onValueChanged.AddListener(TogglePlayerDamageVisibility);
         enemiesDeathsToggle.onValueChanged.AddListener(ToggleEnemiesDeathsVisibility);
 
+        // Add listeners for color dropdowns
+        playerDeathsColorDropdown.onValueChanged.AddListener(ChangePlayerDeathsColor);
+        playerDamageColorDropdown.onValueChanged.AddListener(ChangePlayerDamageColor);
+        enemiesDeathsColorDropdown.onValueChanged.AddListener(ChangeEnemiesDeathsColor);
+
         // Set initial cube sizes
         playerDeathsHeatmapManager.SetCubeSizeMultiplier(0.5f);
         playerDamageHeatmapManager.SetCubeSizeMultiplier(0.5f);
         enemiesDeathsHeatmapManager.SetCubeSizeMultiplier(0.5f);
+
+        // Initialize cube colors based on dropdown defaults
+        InitializeCubeColors();
     }
 
     void Update()
@@ -70,6 +104,45 @@ public class HeatmapSettingsMenu : MonoBehaviour
         {
             cameraController.EnableInput();
         }
+    }
+
+    private void InitializeCubeColors()
+    {
+        ChangePlayerDeathsColor(playerDeathsColorDropdown.value);
+        ChangePlayerDamageColor(playerDamageColorDropdown.value);
+        ChangeEnemiesDeathsColor(enemiesDeathsColorDropdown.value);
+    }
+
+    private void InitializeColorDropdown(TMP_Dropdown dropdown)
+    {
+        dropdown.options.Clear();
+        foreach (var colorName in colorOptions.Keys)
+        {
+            dropdown.options.Add(new TMP_Dropdown.OptionData(colorName));
+        }
+        dropdown.value = 0; // Default to the first color option
+        dropdown.RefreshShownValue();
+    }
+
+    private void ChangePlayerDeathsColor(int index)
+    {
+        playerDeathsHeatmapManager?.SetCubeColor(GetColorFromDropdownIndex(index));
+    }
+
+    private void ChangePlayerDamageColor(int index)
+    {
+        playerDamageHeatmapManager?.SetCubeColor(GetColorFromDropdownIndex(index));
+    }
+
+    private void ChangeEnemiesDeathsColor(int index)
+    {
+        enemiesDeathsHeatmapManager?.SetCubeColor(GetColorFromDropdownIndex(index));
+    }
+
+    private Color GetColorFromDropdownIndex(int index)
+    {
+        string colorName = playerDeathsColorDropdown.options[index].text; // Use any dropdown for the text
+        return colorOptions.ContainsKey(colorName) ? colorOptions[colorName] : Color.white;
     }
 
     private void UpdateCubeSize(float value)
