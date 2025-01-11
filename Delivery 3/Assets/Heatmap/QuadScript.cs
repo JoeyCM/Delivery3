@@ -13,20 +13,24 @@ public class QuadScript : MonoBehaviour
 
     float mDelay;
 
-    // A list of checkboxes (Toggles) and their respective HeatmapManagers
-    [SerializeField] private List<Toggle> checkboxes; // Assign UI Checkboxes in the inspector
-    [SerializeField] private List<HeatmapManager> heatmapManagers; // Assign HeatmapManager instances in the inspector
+    [SerializeField] private List<Toggle> checkboxes; 
+    [SerializeField] private List<HeatmapManager> heatmapManagers;
 
     private List<HeatmapManager> activeHeatmapManagers = new List<HeatmapManager>();
+    private List<GameObject> spawnedParticles = new List<GameObject>();
+
+    // Materials
+    [SerializeField] private Material defaultMaterial; // Default material
+    [SerializeField] private Material heatmapMaterial; // Heatmap material
 
     void Start()
     {
         mDelay = 3;
 
         mMeshRenderer = GetComponent<MeshRenderer>();
-        mMaterial = mMeshRenderer.material;
+        mMaterial = mMeshRenderer.material; // Retrieve the material already assigned to the GameObject
 
-        mPoints = new float[32 * 3]; // 32 points 
+        mPoints = new float[256 * 3]; // 256 points 
 
         if (heatmapManagers == null || heatmapManagers.Count == 0)
         {
@@ -50,6 +54,13 @@ public class QuadScript : MonoBehaviour
 
             AssignCheckboxListeners();
         }
+
+        // Start with a different material (default material)
+        mMaterial = defaultMaterial;
+        mMeshRenderer.material = mMaterial;
+
+        // Call RefreshMaterial at the start to reset the material and hits
+        RefreshMaterial();
     }
 
     void Update()
@@ -57,12 +68,6 @@ public class QuadScript : MonoBehaviour
         mDelay -= Time.deltaTime;
         if (mDelay <= 0)
         {
-            // Spawn particles for all active HeatmapManagers
-            foreach (var manager in activeHeatmapManagers)
-            {
-                SpawnHeatmapParticles(manager);
-            }
-
             mDelay = 0.8f;
         }
     }
@@ -71,7 +76,7 @@ public class QuadScript : MonoBehaviour
     {
         for (int i = 0; i < checkboxes.Count; i++)
         {
-            int index = i; // Capture the index for the lambda
+            int index = i; 
             if (checkboxes[i] != null)
             {
                 checkboxes[i].onValueChanged.AddListener(isChecked =>
@@ -92,18 +97,42 @@ public class QuadScript : MonoBehaviour
                 if (!activeHeatmapManagers.Contains(heatmapManagers[index]))
                 {
                     activeHeatmapManagers.Add(heatmapManagers[index]);
+                    SpawnHeatmapParticles(heatmapManagers[index]);
+
+                    // Refresh the material to reset hits and material settings
+                    RefreshMaterial();
                 }
             }
             else
             {
                 // Remove the HeatmapManager from the active list if it's unchecked
                 activeHeatmapManagers.Remove(heatmapManagers[index]);
+
+                // If no heatmaps are active, reset the material
+                if (activeHeatmapManagers.Count == 0)
+                {
+                    RefreshMaterial();
+                }
             }
         }
         else
         {
             Debug.LogError("Invalid HeatmapManager index.");
         }
+    }
+
+    private void RefreshMaterial()
+    {
+        // Reset the material's _HitCount and _Hits array
+        mHitCount = 0; // Reset hit count
+        mMaterial.SetInt("_HitCount", mHitCount); // Apply reset to _HitCount
+        
+        // Ensure _Hits array is cleared
+        float[] emptyHits = new float[256 * 3]; // Clear the hit array
+        mMaterial.SetFloatArray("_Hits", emptyHits);
+        
+        // You can optionally set other material properties if needed
+        mMaterial.SetFloat("_Diameter", 1.0f); // Reset diameter or any other property if needed
     }
 
     private void SpawnHeatmapParticles(HeatmapManager manager)
@@ -114,11 +143,14 @@ public class QuadScript : MonoBehaviour
 
             foreach (var position in heatmapPositions)
             {
-                // Instantiate the projectile at the position with Y adjusted by +2
+                // Instantiate the projectile at the position with Y adjusted by +1
                 GameObject go = Instantiate(Resources.Load<GameObject>("Projectile"));
                 Vector3 adjustedPosition = position;
-                adjustedPosition.y += 1f; // Adjust the Y position by 2
+                adjustedPosition.y += 1f; // Adjust the Y position by 1
                 go.transform.position = adjustedPosition; // Use adjusted position
+
+                // Store the particle to avoid re-spawning
+                spawnedParticles.Add(go);
             }
         }
     }
@@ -150,9 +182,28 @@ public class QuadScript : MonoBehaviour
         mPoints[mHitCount * 3 + 2] = Random.Range(1f, 3f);
 
         mHitCount++;
-        mHitCount %= 32;
+        mHitCount %= 256;
 
         mMaterial.SetFloatArray("_Hits", mPoints);
         mMaterial.SetInt("_HitCount", mHitCount);
+    }
+
+    // Method to switch to heatmap material when called
+    public void HeatmapEntry()
+    {
+        // Switch material to the heatmap material
+        mMaterial = heatmapMaterial;
+        mMeshRenderer.material = mMaterial;
+
+        // Reset the material for heatmap
+        RefreshMaterial();
+    }
+
+    // Method to switch to heatmap material when called
+    public void HeatmapExit()
+    {
+        // Switch material to the heatmap material
+        mMaterial = defaultMaterial;
+        mMeshRenderer.material = mMaterial;
     }
 }
