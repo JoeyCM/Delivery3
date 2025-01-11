@@ -33,6 +33,10 @@ if ($requestType === 'insert') {
     $timestamp = $data['Timestamp'] ?? null;
     $position = $data['Position'] ?? null;
 
+    $enemyEventType = $data['EnemyEventType'] ?? null;
+    $enemyTimestamp = $data['EnemyTimestamp'] ?? null;
+    $enemyPosition = $data['EnemyPosition'] ?? null;
+
     if ($eventType && $timestamp && $position) {
         $positionEscaped = $conn->real_escape_string($position);
 
@@ -44,12 +48,11 @@ if ($requestType === 'insert') {
         } else {
             echo "Error: " . $sql->error;
         }
-    } else if (isset($data['EnemyEventType'], $data['EnemyTimestamp'], $data['EnemyPosition'])) {
-        $enemyEventType = $data['EnemyEventType'];
-        $enemyTimestamp = $data['EnemyTimestamp'];
-        $enemyPosition = $conn->real_escape_string($data['EnemyPosition']);
-
-        $sql = $conn->prepare("INSERT INTO enemyevents (EnemyEventType, EnemyTimestamp, EnemyPosition) VALUES (?, ?, ?)");
+    } 
+    else if ($enemyEventType && $enemyTimestamp && $enemyPosition) {
+        $enemyPositionEscaped = $conn->real_escape_string($enemyPosition);
+        
+        $sql = $conn->prepare("INSERT INTO enemyEvents (EnemyEventType, EnemyTimestamp, EnemyPosition) VALUES (?, ?, ?)");
         $sql->bind_param("sss", $enemyEventType, $enemyTimestamp, $enemyPosition);
 
         if ($sql->execute()) {
@@ -61,7 +64,7 @@ if ($requestType === 'insert') {
         echo "Error: Missing required fields.";
     }
 } else if ($requestType === 'fetch') {
-    // Fetch data for heatmap
+    // Fetch data for PLAYER heatmap
     $eventType = $_GET['eventType'] ?? '';
     if (empty($eventType)) {
         echo "Error: Missing 'eventType' parameter.";
@@ -80,7 +83,28 @@ if ($requestType === 'insert') {
     }
 
     echo json_encode($output);
-} else {
+} else if ($requestType === 'fetchEnemies') {
+    // Fetch data for ENEMIES heatmap
+    $enemyEventType = $_GET['enemyEventType'] ?? '';
+    if (empty($enemyEventType)) {
+        echo "Error: Missing 'enemyEventType' parameter.";
+        exit;
+    }
+
+    $sql = "SELECT EnemyPosition, COUNT(*) as Count FROM enemyEvents WHERE EnemyEventType = ? GROUP BY EnemyPosition";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $enemyEventType);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $output = [];
+    while ($row = $result->fetch_assoc()) {
+        $output[] = $row;
+    }
+
+    echo json_encode($output);
+} 
+else {
     echo "Error: Invalid request type.";
 }
 

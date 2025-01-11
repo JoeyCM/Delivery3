@@ -6,7 +6,8 @@ using UnityEngine.Networking;
 public class HeatmapManager : MonoBehaviour
 {
     [SerializeField] private string serverUrl;
-    [SerializeField] private string eventType; // e.g., "OnDeath" or "OnReceiveDamage"
+    [SerializeField] private bool playerHeatmap;
+    [SerializeField] private string eventType; // PLAYER -> "Death" or "ReceiveDamage" ; ENEMIES -> "OnDeath"
     [SerializeField] private GameObject cubePrefab;
     [SerializeField] private Transform parentTransform;
 
@@ -25,7 +26,15 @@ public class HeatmapManager : MonoBehaviour
 
     private IEnumerator FetchHeatmapData()
     {
-        string url = $"{serverUrl}?request=fetch&eventType={eventType}";
+        string url;
+        if (playerHeatmap)
+        {
+            url = $"{serverUrl}?request=fetch&eventType={eventType}";
+        }
+        else
+        {
+            url = $"{serverUrl}?request=fetchEnemies&enemyEventType={eventType}";
+        }
 
         using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
@@ -47,7 +56,20 @@ public class HeatmapManager : MonoBehaviour
 
     private List<HeatmapData> ParseHeatmapData(string json)
     {
+        Debug.Log($"Raw JSON: {json}");
+
+        // Parse the JSON with a wrapper for generic handling
         HeatmapData[] dataArray = JsonUtility.FromJson<HeatmapDataWrapper>($"{{\"data\":{json}}}").data;
+
+        // If position is still null for any entry, attempt fallback parsing
+        foreach (var data in dataArray)
+        {
+            if (string.IsNullOrEmpty(data.Position))
+            {
+                data.Position = data.EnemyPosition;
+            }
+        }
+
         return new List<HeatmapData>(dataArray);
     }
 
@@ -57,7 +79,10 @@ public class HeatmapManager : MonoBehaviour
 
         foreach (var data in heatmapData)
         {
+            Debug.Log($"Processing data: Position = {data.Position}, Count = {data.Count}, Type = {eventType}");
             Vector3 position = ParsePosition(data.Position);
+            Debug.Log($"Parsed position: {position}");
+
             Vector3 roundedPosition = new Vector3(
                 Mathf.Round(position.x),
                 Mathf.Round(position.y),
@@ -117,13 +142,33 @@ public class HeatmapManager : MonoBehaviour
 
     private Vector3 ParsePosition(string positionString)
     {
+        if (string.IsNullOrEmpty(positionString))
+        {
+            Debug.LogError("Invalid position string: null or empty.");
+            return Vector3.zero;
+        }
+
         positionString = positionString.Trim('(', ')');
         string[] parts = positionString.Split(',');
-        return new Vector3(
-            float.Parse(parts[0], System.Globalization.CultureInfo.InvariantCulture),
-            float.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture),
-            float.Parse(parts[2], System.Globalization.CultureInfo.InvariantCulture)
-        );
+        if (parts.Length != 3)
+        {
+            Debug.LogError($"Invalid position string format: {positionString}");
+            return Vector3.zero;
+        }
+
+        try
+        {
+            return new Vector3(
+                float.Parse(parts[0], System.Globalization.CultureInfo.InvariantCulture),
+                float.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture),
+                float.Parse(parts[2], System.Globalization.CultureInfo.InvariantCulture)
+            );
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error parsing position string: {positionString}, Exception: {e}");
+            return Vector3.zero;
+        }
     }
 
     public void SetCubeSizeMultiplier(float value)
@@ -164,13 +209,12 @@ public class HeatmapManager : MonoBehaviour
         }
     }
 
-    // New method to get heatmap positions
     public List<Vector3> GetHeatmapPositions()
     {
         List<Vector3> positions = new List<Vector3>();
         foreach (var entry in heatmapDataDensity)
         {
-            positions.Add(entry.Key);  // Each key is a position
+            positions.Add(entry.Key);
         }
         return positions;
     }
@@ -185,6 +229,7 @@ public class HeatmapManager : MonoBehaviour
     private class HeatmapData
     {
         public string Position;
+        public string EnemyPosition;
         public int Count;
     }
 }

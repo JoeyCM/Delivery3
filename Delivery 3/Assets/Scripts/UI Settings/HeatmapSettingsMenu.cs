@@ -10,12 +10,14 @@ public class HeatmapSettingsMenu : MonoBehaviour
     public TextMeshProUGUI cubeSizeValueText;
 
     [Header("Heatmap Managers")]
-    public HeatmapManager deathsHeatmapManager;   // HeatmapManager for deaths
-    public HeatmapManager damageHeatmapManager;  // HeatmapManager for damage
+    public HeatmapManager playerDeathsHeatmapManager;   // HeatmapManager for deaths
+    public HeatmapManager playerDamageHeatmapManager;  // HeatmapManager for damage
+    public HeatmapManager enemiesDeathsHeatmapManager;  // HeatmapManager for damage
 
     [Header("Toggle Visibility")]
-    public Toggle deathsToggle;  // Toggle for deaths cubes
-    public Toggle damageToggle;  // Toggle for damage cubes
+    public Toggle playerDeathsToggle;  // Toggle for deaths cubes
+    public Toggle playerDamageToggle;  // Toggle for damage cubes
+    public Toggle enemiesDeathsToggle;  // Toggle for damage cubes
 
     public CameraController cameraController;
 
@@ -31,12 +33,14 @@ public class HeatmapSettingsMenu : MonoBehaviour
 
         // Add listeners to UI elements
         cubeSizeSlider.onValueChanged.AddListener(UpdateCubeSize);
-        deathsToggle.onValueChanged.AddListener(ToggleDeathsVisibility);
-        damageToggle.onValueChanged.AddListener(ToggleDamageVisibility);
+        playerDeathsToggle.onValueChanged.AddListener(TogglePlayerDeathsVisibility);
+        playerDamageToggle.onValueChanged.AddListener(TogglePlayerDamageVisibility);
+        enemiesDeathsToggle.onValueChanged.AddListener(ToggleEnemiesDeathsVisibility);
 
         // Set initial cube sizes
-        deathsHeatmapManager.SetCubeSizeMultiplier(0.5f);
-        damageHeatmapManager.SetCubeSizeMultiplier(0.5f);
+        playerDeathsHeatmapManager.SetCubeSizeMultiplier(0.5f);
+        playerDamageHeatmapManager.SetCubeSizeMultiplier(0.5f);
+        enemiesDeathsHeatmapManager.SetCubeSizeMultiplier(0.5f);
     }
 
     void Update()
@@ -73,22 +77,29 @@ public class HeatmapSettingsMenu : MonoBehaviour
         Debug.Log($"Cube Size Multiplier Changed: {value}");
 
         // Update cube sizes for both heatmap managers
-        deathsHeatmapManager?.SetCubeSizeMultiplier(value);
-        damageHeatmapManager?.SetCubeSizeMultiplier(value);
+        playerDeathsHeatmapManager?.SetCubeSizeMultiplier(value);
+        playerDamageHeatmapManager?.SetCubeSizeMultiplier(value);
+        enemiesDeathsHeatmapManager?.SetCubeSizeMultiplier(value);
 
         // Update the slider value text
         cubeSizeValueText.text = value.ToString("F2");
     }
 
-    private void ToggleDeathsVisibility(bool isVisible)
+    private void TogglePlayerDeathsVisibility(bool isVisible)
     {
-        Debug.Log($"Toggle Deaths Visibility: {isVisible}");
-        deathsHeatmapManager?.SetCubeVisibility(isVisible);
+        Debug.Log($"Toggle Player Deaths Visibility: {isVisible}");
+        playerDeathsHeatmapManager?.SetCubeVisibility(isVisible);
     }
 
-    private void ToggleDamageVisibility(bool isVisible)
+    private void TogglePlayerDamageVisibility(bool isVisible)
     {
-        Debug.Log($"Toggle Damage Visibility: {isVisible}");
-        damageHeatmapManager?.SetCubeVisibility(isVisible);
+        Debug.Log($"Toggle Player Damage Visibility: {isVisible}");
+        playerDamageHeatmapManager?.SetCubeVisibility(isVisible);
+    }
+
+    private void ToggleEnemiesDeathsVisibility(bool isVisible)
+    {
+        Debug.Log($"Toggle Enemies Deaths Visibility: {isVisible}");
+        enemiesDeathsHeatmapManager?.SetCubeVisibility(isVisible);
     }
 }
