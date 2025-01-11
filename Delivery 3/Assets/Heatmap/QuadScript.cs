@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class QuadScript : MonoBehaviour
 {
@@ -12,8 +13,11 @@ public class QuadScript : MonoBehaviour
 
     float mDelay;
 
-    // Reference to the HeatmapManager script that we will assign in the inspector
-    [SerializeField] private HeatmapManager heatmapManager;
+    // A list of checkboxes (Toggles) and their respective HeatmapManagers
+    [SerializeField] private List<Toggle> checkboxes; // Assign UI Checkboxes in the inspector
+    [SerializeField] private List<HeatmapManager> heatmapManagers; // Assign HeatmapManager instances in the inspector
+
+    private List<HeatmapManager> activeHeatmapManagers = new List<HeatmapManager>();
 
     void Start()
     {
@@ -24,10 +28,27 @@ public class QuadScript : MonoBehaviour
 
         mPoints = new float[32 * 3]; // 32 points 
 
-        // Ensure HeatmapManager is assigned
-        if (heatmapManager == null)
+        if (heatmapManagers == null || heatmapManagers.Count == 0)
         {
-            Debug.LogError("HeatmapManager is not assigned in QuadScript.");
+            Debug.LogError("No HeatmapManager instances assigned.");
+        }
+
+        if (checkboxes == null || checkboxes.Count != heatmapManagers.Count)
+        {
+            Debug.LogError("Ensure the number of checkboxes matches the number of HeatmapManager instances.");
+        }
+        else
+        {
+            // Set all checkboxes to off at the start
+            foreach (var toggle in checkboxes)
+            {
+                if (toggle != null)
+                {
+                    toggle.isOn = false; // Ensure all checkboxes start unchecked
+                }
+            }
+
+            AssignCheckboxListeners();
         }
     }
 
@@ -36,28 +57,68 @@ public class QuadScript : MonoBehaviour
         mDelay -= Time.deltaTime;
         if (mDelay <= 0)
         {
-            // Spawn all particles at once based on heatmap data
-            SpawnHeatmapParticles();
+            // Spawn particles for all active HeatmapManagers
+            foreach (var manager in activeHeatmapManagers)
+            {
+                SpawnHeatmapParticles(manager);
+            }
 
             mDelay = 0.5f;
         }
     }
 
-    // Spawn particles based on heatmap positions
-    private void SpawnHeatmapParticles()
+    private void AssignCheckboxListeners()
     {
-        // Ensure heatmapManager is not null before accessing the positions
-        if (heatmapManager != null)
+        for (int i = 0; i < checkboxes.Count; i++)
         {
-            List<Vector3> heatmapPositions = heatmapManager.GetHeatmapPositions();
+            int index = i; // Capture the index for the lambda
+            if (checkboxes[i] != null)
+            {
+                checkboxes[i].onValueChanged.AddListener(isChecked =>
+                {
+                    ToggleHeatmapManager(index, isChecked);
+                });
+            }
+        }
+    }
+
+    private void ToggleHeatmapManager(int index, bool isChecked)
+    {
+        if (index >= 0 && index < heatmapManagers.Count)
+        {
+            if (isChecked)
+            {
+                // Add the HeatmapManager to the active list if it's checked
+                if (!activeHeatmapManagers.Contains(heatmapManagers[index]))
+                {
+                    activeHeatmapManagers.Add(heatmapManagers[index]);
+                }
+            }
+            else
+            {
+                // Remove the HeatmapManager from the active list if it's unchecked
+                activeHeatmapManagers.Remove(heatmapManagers[index]);
+            }
+        }
+        else
+        {
+            Debug.LogError("Invalid HeatmapManager index.");
+        }
+    }
+
+    private void SpawnHeatmapParticles(HeatmapManager manager)
+    {
+        if (manager != null)
+        {
+            List<Vector3> heatmapPositions = manager.GetHeatmapPositions();
 
             foreach (var position in heatmapPositions)
             {
-                // Instantiate the projectile at the position with Y adjusted by +10
+                // Instantiate the projectile at the position with Y adjusted by +2
                 GameObject go = Instantiate(Resources.Load<GameObject>("Projectile"));
                 Vector3 adjustedPosition = position;
-                adjustedPosition.y += 2f;  // Adjust the Y position by 10
-                go.transform.position = adjustedPosition;  // Use adjusted position
+                adjustedPosition.y += 2f; // Adjust the Y position by 2
+                go.transform.position = adjustedPosition; // Use adjusted position
             }
         }
     }
@@ -66,8 +127,6 @@ public class QuadScript : MonoBehaviour
     {
         foreach (ContactPoint cp in collision.contacts)
         {
-            Debug.Log("Contact with object " + cp.otherCollider.gameObject.name);
-
             Vector3 StartOfRay = cp.point - cp.normal;
             Vector3 RayDir = cp.normal;
 
@@ -78,8 +137,6 @@ public class QuadScript : MonoBehaviour
 
             if (hitit)
             {
-                Debug.Log("Hit Object " + hit.collider.gameObject.name);
-                Debug.Log("Hit Texture coordinates = " + hit.textureCoord.x + "," + hit.textureCoord.y);
                 addHitPoint(hit.textureCoord.x * 4 - 2, hit.textureCoord.y * 4 - 2);
             }
             Destroy(cp.otherCollider.gameObject);
