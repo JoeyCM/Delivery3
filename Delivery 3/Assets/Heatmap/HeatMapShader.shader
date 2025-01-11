@@ -15,9 +15,9 @@
       _Range3("Range 3",Range(0,1)) = 0.75
       _Range4("Range 4",Range(0,1)) = 1
 
-      _Diameter("Diameter",Range(0,1)) = 1.0
-      _Strength("Strength",Range(.1,4)) = 1.0
-      _PulseSpeed("Pulse Speed",Range(0,5)) = 0
+      _Diameter("Diameter",Range(0,10)) = 1.0      // Updated range
+      _Strength("Strength",Range(0.1,50)) = 1.0      // Updated range
+      _PulseSpeed("Pulse Speed",Range(0,20)) = 0.0   // Updated range
   }
     SubShader
     {
@@ -139,21 +139,28 @@
 
         fixed4 frag(v2f i) : SV_Target
         {
-          fixed4 col = tex2D(_MainTex, i.uv);
+            fixed4 col = tex2D(_MainTex, i.uv);
 
-          initalize();
-          float2 uv = i.uv;
-          uv = uv * 4.0 - float2(2.0,2.0);  //our texture uv range is -2 to 2
+            initalize();
+            float2 uv = i.uv;
+            uv = uv * 4.0 - float2(2.0,2.0);  // Our texture uv range is -2 to 2
 
-          float totalWeight = 0.0;
-          for (float i = 0.0; i < _HitCount; i++)
-          {
-            float2 work_pt = float2(_Hits[i * 3], _Hits[i * 3 + 1]);
-            float pt_intensity = _Hits[i * 3 + 2];
+            float totalWeight = 0.0;
+            for (float i = 0.0; i < _HitCount; i++)
+            {
+                float2 work_pt = float2(_Hits[i * 3], _Hits[i * 3 + 1]);
+                float pt_intensity = _Hits[i * 3 + 2];
 
-            totalWeight += 0.5 * distsq(uv, work_pt) * pt_intensity * _Strength * (1 + sin(_Time.y * _PulseSpeed));
-          }
-          return col + float4(getHeatForPixel(totalWeight), .5);
+                // Adjusting the weight calculation to be more sensitive to overlapping particles
+                float dist = distance(uv, work_pt);
+                float overlapEffect = max(0.0, 1.0 - dist / _Diameter);  // Ensuring the effect increases as they get closer
+
+                // Amplifying the effect of multiple particles by accumulating intensities
+                totalWeight += (overlapEffect * pt_intensity * _Strength * (1 + sin(_Time.y * _PulseSpeed)));
+            }
+
+            // Set the color of the heatmap based on totalWeight
+            return col + float4(getHeatForPixel(totalWeight), .5);
         }
 
 
