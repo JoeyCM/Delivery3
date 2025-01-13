@@ -36,7 +36,7 @@ public static class ServerSender
 
     private static string FormatDateInJson(string jsonData)
     {
-        // Regular expression to match ISO 8601 datetime format (e.g., 2025-01-08T16:41:47.5138722Z)
+        // Regular expression to match ISO 8601 datetime format (e.g., 2025-01-08 16:41:47.51)
         string datePattern = @"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z)";
 
         // Replace all instances of the ISO 8601 datetime in the jsonData with the desired format

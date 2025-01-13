@@ -29,7 +29,7 @@ namespace Gamekit3D
         private void SendOnDeathData()
         {
             // Collect and send death event data
-            string positionString = transform.position.ToString(); // Convert position to string
+            string positionString = transform.position.ToString();
 
             if (string.IsNullOrEmpty(positionString))
             {

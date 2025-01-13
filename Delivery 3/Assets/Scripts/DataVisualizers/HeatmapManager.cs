@@ -8,7 +8,7 @@ public class HeatmapManager : MonoBehaviour
 {
     [SerializeField] private string serverUrl;
     [SerializeField] private bool playerHeatmap;
-    [SerializeField] private string eventType; // PLAYER -> "Death" or "ReceiveDamage" ; ENEMIES -> "OnDeath"
+    [SerializeField] private string eventType; //IMPORTANT! Player -> "Death" or "ReceiveDamage" ; Enemies -> "OnDeath"
     [SerializeField] private GameObject cubePrefab;
     [SerializeField] private Transform parentTransform;
 

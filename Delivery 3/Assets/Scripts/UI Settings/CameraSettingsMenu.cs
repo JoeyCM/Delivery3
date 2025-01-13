@@ -1,26 +1,25 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // For TextMeshPro
-using UnityEngine.EventSystems; // For EventSystem to manage UI interactions
+using TMPro;
+using UnityEngine.EventSystems;
 
 public class CameraSettingsMenu : MonoBehaviour
 {
-    public GameObject settingsPanel; // Reference to the settings panel
+    public GameObject settingsPanel;
     public Slider sensitivitySlider;
     public Slider movementSpeedSlider;
     public Slider verticalSpeedSlider;
 
-    public TextMeshProUGUI sensitivityValueText; // Text to display sensitivity value
-    public TextMeshProUGUI movementSpeedValueText; // Text to display movement speed value
-    public TextMeshProUGUI verticalSpeedValueText; // Text to display vertical speed value
+    public TextMeshProUGUI sensitivityValueText;
+    public TextMeshProUGUI movementSpeedValueText;
+    public TextMeshProUGUI verticalSpeedValueText;
 
-    public CameraController cameraController; // Reference to the CameraController script
+    public CameraController cameraController;
 
-    private bool isPanelActive = false; // Track whether the panel is active or not
+    private bool isPanelActive = false;
 
     void Start()
     {
-        // Ensure the panel starts as inactive
         settingsPanel.SetActive(false);
 
         // Configure slider ranges
@@ -28,7 +27,7 @@ public class CameraSettingsMenu : MonoBehaviour
         sensitivitySlider.maxValue = 1400f;
         movementSpeedSlider.minValue = 5f;
         movementSpeedSlider.maxValue = 15f;
-        verticalSpeedSlider.minValue = 0f; // Assuming a range for vertical speed
+        verticalSpeedSlider.minValue = 0f;
         verticalSpeedSlider.maxValue = 10f;
 
         // Set default slider values to match CameraController settings
@@ -49,7 +48,6 @@ public class CameraSettingsMenu : MonoBehaviour
 
     void Update()
     {
-        // If the settings panel is active, ignore WASD input by disabling the CameraController's input handling
         if (isPanelActive)
         {
             cameraController.DisableInput();
@@ -68,32 +66,31 @@ public class CameraSettingsMenu : MonoBehaviour
         isPanelActive = !isPanelActive;
         settingsPanel.SetActive(isPanelActive);
 
-        // Disable or enable camera input based on panel visibility
         if (isPanelActive)
         {
-            cameraController.DisableInput(); // Disable input when panel is visible
+            cameraController.DisableInput();
         }
         else
         {
-            cameraController.EnableInput(); // Enable input when panel is hidden
+            cameraController.EnableInput();
         }
     }
 
     private void UpdateSensitivity(float value)
     {
         cameraController.mouseSensitivity = value;
-        sensitivityValueText.text = value.ToString("F1"); // Update text to show new value
+        sensitivityValueText.text = value.ToString("F1");
     }
 
     private void UpdateMovementSpeed(float value)
     {
         cameraController.movementSpeed = value;
-        movementSpeedValueText.text = value.ToString("F1"); // Update text to show new value
+        movementSpeedValueText.text = value.ToString("F1");
     }
 
     private void UpdateVerticalSpeed(float value)
     {
         cameraController.verticalSpeed = value;
-        verticalSpeedValueText.text = value.ToString("F1"); // Update text to show new value
+        verticalSpeedValueText.text = value.ToString("F1");
     }
 }

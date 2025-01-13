@@ -12,9 +12,9 @@ public class HeatmapSettingsMenu : MonoBehaviour
     public TextMeshProUGUI cubeSizeValueText;
 
     [Header("Heatmap Managers")]
-    public HeatmapManager playerDeathsHeatmapManager;   // HeatmapManager for deaths
-    public HeatmapManager playerDamageHeatmapManager;  // HeatmapManager for damage
-    public HeatmapManager enemiesDeathsHeatmapManager;  // HeatmapManager for enemies
+    public HeatmapManager playerDeathsHeatmapManager;
+    public HeatmapManager playerDamageHeatmapManager;
+    public HeatmapManager enemiesDeathsHeatmapManager;
 
     [Header("Color Dropdowns")]
     public TMP_Dropdown playerDeathsColorDropdown;
@@ -22,9 +22,9 @@ public class HeatmapSettingsMenu : MonoBehaviour
     public TMP_Dropdown enemiesDeathsColorDropdown;
 
     [Header("Toggle Visibility")]
-    public Toggle playerDeathsToggle;  // Toggle for deaths cubes
-    public Toggle playerDamageToggle;  // Toggle for damage cubes
-    public Toggle enemiesDeathsToggle;  // Toggle for damage cubes
+    public Toggle playerDeathsToggle;
+    public Toggle playerDamageToggle;
+    public Toggle enemiesDeathsToggle;
 
     public CameraController cameraController;
 
@@ -120,7 +120,7 @@ public class HeatmapSettingsMenu : MonoBehaviour
         {
             dropdown.options.Add(new TMP_Dropdown.OptionData(colorName));
         }
-        dropdown.value = 0; // Default to the first color option
+        dropdown.value = 0;
         dropdown.RefreshShownValue();
     }
 
@@ -141,7 +141,7 @@ public class HeatmapSettingsMenu : MonoBehaviour
 
     private Color GetColorFromDropdownIndex(int index)
     {
-        string colorName = playerDeathsColorDropdown.options[index].text; // Use any dropdown for the text
+        string colorName = playerDeathsColorDropdown.options[index].text;
         return colorOptions.ContainsKey(colorName) ? colorOptions[colorName] : Color.white;
     }
 

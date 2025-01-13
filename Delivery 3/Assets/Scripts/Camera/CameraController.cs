@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.EventSystems; // Required to detect UI interactions
+using UnityEngine.EventSystems;
 
 public class CameraController : MonoBehaviour
 {
@@ -7,9 +7,9 @@ public class CameraController : MonoBehaviour
     public float movementSpeed = 5f;
     public float verticalSpeed = 5f;
 
-    private float pitch = 0f; // Vertical rotation
-    private float yaw = 0f; // Horizontal rotation
-    private bool canMove = true; // Track whether movement input is allowed
+    private float pitch = 0f;
+    private float yaw = 0f;
+    private bool canMove = true;
 
     void Update()
     {
@@ -22,7 +22,7 @@ public class CameraController : MonoBehaviour
         // Check if the mouse is over a UI element before processing input
         if (EventSystem.current.IsPointerOverGameObject())
         {
-            return; // Skip camera movement if interacting with UI
+            return;
         }
 
         // Mouse look
@@ -31,13 +31,13 @@ public class CameraController : MonoBehaviour
 
         yaw += mouseX;
         pitch -= mouseY;
-        pitch = Mathf.Clamp(pitch, -90f, 90f); // Prevent flipping when looking up/down
+        pitch = Mathf.Clamp(pitch, -90f, 90f);
 
         transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
 
         // WASD movement
-        float moveX = Input.GetAxis("Horizontal"); // A/D or Left/Right
-        float moveZ = Input.GetAxis("Vertical"); // W/S or Up/Down
+        float moveX = Input.GetAxis("Horizontal");
+        float moveZ = Input.GetAxis("Vertical");
 
         Vector3 moveDirection = transform.right * moveX + transform.forward * moveZ;
         transform.position += moveDirection * movementSpeed * Time.deltaTime;
@@ -54,13 +54,11 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    // Method to disable input when the settings panel is active
     public void DisableInput()
     {
         canMove = false;
     }
 
-    // Method to enable input when the settings panel is not active
     public void EnableInput()
     {
         canMove = true;
