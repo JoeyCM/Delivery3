@@ -1,44 +1,107 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class CameraManagerTMP : MonoBehaviour
 {
-    [SerializeField] private List<Camera> cameras;
-    [SerializeField] private TMP_Dropdown cameraDropdown;
+    [Header("UI Elements")]
+    public TMP_Dropdown cameraDropdown; // Reference to the TextMeshPro Dropdown
+    public TMP_Text currentCameraLabel; // Reference to the TMP_Text for displaying the current camera name
+    public GameObject specialActionObject; // The GameObject that will only appear when index is 1
 
-    private void Start()
+    [Header("Cameras")]
+    public List<Camera> cameras = new List<Camera>(); // Manually assign cameras in the Inspector
+
+    void Start()
     {
-        for (int i = 0; i < cameras.Count; i++)
+        // Validate assignments
+        if (cameraDropdown == null)
         {
-            cameras[i].gameObject.SetActive(i == 0);
+            Debug.LogError("Camera Dropdown is not assigned.");
+            return;
         }
 
-        PopulateDropdown();
+        if (currentCameraLabel == null)
+        {
+            Debug.LogError("Current Camera Label is not assigned.");
+            return;
+        }
 
-        cameraDropdown.onValueChanged.AddListener(OnDropdownValueChanged);
+        if (specialActionObject == null)
+        {
+            Debug.LogError("Special Action Object is not assigned.");
+            return;
+        }
+
+        if (cameras == null || cameras.Count == 0)
+        {
+            Debug.LogError("No cameras assigned to the script.");
+            return;
+        }
+
+        // Populate the dropdown and set the first camera active
+        PopulateDropdown();
+        ActivateCamera(0);
+
+        // Subscribe to the dropdown's value change event
+        cameraDropdown.onValueChanged.AddListener(OnCameraSelected);
+
+        // Initially hide the special action object
+        specialActionObject.SetActive(false);
     }
 
-    private void PopulateDropdown()
+    // Populate the dropdown with camera GameObject names
+    void PopulateDropdown()
     {
         List<string> cameraNames = new List<string>();
 
         foreach (Camera cam in cameras)
         {
-            cameraNames.Add(cam.name);
+            if (cam != null)
+            {
+                cameraNames.Add(cam.gameObject.name); // Use the GameObject's name
+            }
+            else
+            {
+                Debug.LogWarning("A null camera is assigned in the list.");
+            }
         }
 
-        cameraDropdown.ClearOptions();
-        cameraDropdown.AddOptions(cameraNames);
+        cameraDropdown.ClearOptions(); // Clear any existing options
+        cameraDropdown.AddOptions(cameraNames); // Add the camera names to the dropdown
     }
 
-    private void OnDropdownValueChanged(int index)
+    // Event handler for dropdown selection
+    void OnCameraSelected(int index)
     {
-        foreach (Camera cam in cameras)
+        ActivateCamera(index);
+    }
+
+    // Activate the selected camera and update the label
+    void ActivateCamera(int index)
+    {
+        for (int i = 0; i < cameras.Count; i++)
         {
-            cam.gameObject.SetActive(false);
+            if (cameras[i] != null)
+            {
+                cameras[i].gameObject.SetActive(i == index);
+            }
         }
 
-        cameras[index].gameObject.SetActive(true);
+        string activeCameraName = cameras[index].gameObject.name;
+        UpdateCurrentCameraLabel(activeCameraName);
+
+        // Show or hide the special action object based on the current index
+        specialActionObject.SetActive(index == 1);
+    }
+
+    // Update the TMP_Text with the current camera name
+    void UpdateCurrentCameraLabel(string cameraName)
+    {
+        if (currentCameraLabel != null)
+        {
+            currentCameraLabel.text = $"Current Camera: {cameraName}";
+        }
     }
 }
